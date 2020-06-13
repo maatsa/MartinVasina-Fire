@@ -32,7 +32,6 @@ namespace MartinVasina
     private Vector3d PARTICLE_VELOCITY = new Vector3d(0,0.1,0);
     private double NOISE_DISPERSION = 8;
 
-
     private Fire() {
       // Set Material and NO_SHADOW
       SetMaterial();
@@ -117,32 +116,6 @@ namespace MartinVasina
     }
 
 
-    // OLD Method TODO remove
-    /*public ISceneNode GetFireISceneNode ()
-    {
-      CSGInnerNode sf = new CSGInnerNode(SetOperation.Union);
-
-      PhongMaterial pm = new PhongMaterial(new double[] { 0.886, 0.345, 0.133 }, 0.8, 0.0, 0, 128);
-      pm.n = 1.0; //Absolute index of refraction
-      pm.Kt = 1; //Coefficient of transparency.
-
-      sf.SetAttribute(PropertyName.MATERIAL, pm);
-      sf.SetAttribute(PropertyName.NO_SHADOW, true);
-
-      Console.WriteLine(fireParticles.Count);
-
-      Sphere s;
-      foreach (FireParticle fp in fireParticles)
-      {
-        s = new Sphere();
-        sf.InsertChild(s, Matrix4d.Scale(fp.GetRadius()) * Matrix4d.CreateTranslation(fp.GetActualPosition().X, fp.GetActualPosition().Y, fp.GetActualPosition().Z));
-      }
-
-      return sf;
-    }*/
-
-
-
 
     // ------- ITimeDependent -------
 
@@ -156,24 +129,25 @@ namespace MartinVasina
     /// </summary>
     public double End { get; set; }
 
+    private double oldTime = 0; // Rozdil mezi oldTime a time urcuje pocet simulacnich kroku, ktere se maji provest pri setTime
     protected double time;
 
-    private int timeIndex = 0;
     private int movesPerSecond = 16;
 
     /// <summary>
     /// Propagates time to descendants.
+    /// Update object to the new time.. works only into the future
     /// </summary>
     protected virtual void setTime (double newTime)
     {
-      time = newTime;
-
+      int timeIndex = (int)(movesPerSecond * oldTime);
       int newTimeIndex = (int)(movesPerSecond * newTime);
-
       for (int i = timeIndex; i < newTimeIndex; ++i)
       {
         FireSimulationStep();
       }
+      oldTime = newTime;
+      time = newTime;
     }
 
     /// <summary>
@@ -205,7 +179,9 @@ namespace MartinVasina
       foreach (FireParticle fp in this.fireParticles)
         fireClone.fireParticles.Add(fp.Clone());
 
+      fireClone.oldTime = this.time;
       fireClone.Time = time;
+
       return fireClone;
     }
 
